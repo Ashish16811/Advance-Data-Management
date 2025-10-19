@@ -1,0 +1,251 @@
+1. Uniqueness Constraints
+
+CREATE CONSTRAINT customer_id  IF NOT EXISTS FOR (c:Customer)   REQUIRE c.customerId IS UNIQUE;
+CREATE CONSTRAINT order_id     IF NOT EXISTS FOR (o:Order)      REQUIRE o.orderId IS UNIQUE;
+CREATE CONSTRAINT orderitem_id IF NOT EXISTS FOR (oi:OrderItem) REQUIRE oi.orderItemId IS UNIQUE;
+CREATE CONSTRAINT payment_id   IF NOT EXISTS FOR (p:Payment)    REQUIRE p.paymentId IS UNIQUE;
+CREATE CONSTRAINT product_id   IF NOT EXISTS FOR (pr:Product)   REQUIRE pr.productId IS UNIQUE;
+CREATE CONSTRAINT supplier_id  IF NOT EXISTS FOR (s:Supplier)   REQUIRE s.supplierId IS UNIQUE;
+CREATE CONSTRAINT promotion_id IF NOT EXISTS FOR (pm:Promotion) REQUIRE pm.promotionId IS UNIQUE;
+CREATE CONSTRAINT inventory_id IF NOT EXISTS FOR (i:Inventory)  REQUIRE i.inventoryId IS UNIQUE;
+CREATE CONSTRAINT warehouse_id IF NOT EXISTS FOR (w:Warehouse)  REQUIRE w.warehouseId IS UNIQUE;
+
+CREATE INDEX customer_email IF NOT EXISTS FOR (c:Customer) ON (c.email);
+CREATE INDEX product_name   IF NOT EXISTS FOR (p:Product)  ON (p.name);
+
+
+2. Relationship Creation from CSV Files
+
+
+// Customer -> Order
+CALL () {
+  LOAD CSV WITH HEADERS FROM 'file:///Orders.csv' AS row
+  WITH row WHERE trim(row.OrderID) <> '' AND trim(row.CustomerID) <> ''
+  MATCH (c:Customer {customerId: trim(row.CustomerID)})
+  MATCH (o:Order    {orderId: trim(row.OrderID)})
+  MERGE (c)-[:PLACED]->(o)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Order -> OrderItem
+CALL () {
+  LOAD CSV WITH HEADERS FROM 'file:///OrderItem.csv' AS row
+  WITH row WHERE trim(row.OrderID) <> '' AND trim(row.OrderItemID) <> ''
+  MATCH (o:Order      {orderId:     trim(row.OrderID)})
+  MATCH (oi:OrderItem {orderItemId: trim(row.OrderItemID)})
+  MERGE (o)-[:CONTAINS]->(oi)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// OrderItem -> Product
+CALL () {
+  LOAD CSV WITH HEADERS FROM 'file:///OrderItem.csv' AS row
+  WITH row WHERE trim(row.OrderItemID) <> '' AND trim(row.ProductID) <> ''
+  MATCH (oi:OrderItem {orderItemId: trim(row.OrderItemID)})
+  MATCH (p:Product    {productId:   trim(row.ProductID)})
+  MERGE (oi)-[:OF_PRODUCT]->(p)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Order -> Payment
+CALL () {
+  LOAD CSV WITH HEADERS FROM 'file:///Payment.csv' AS row
+  WITH row WHERE trim(row.OrderID) <> '' AND trim(row.PaymentID) <> ''
+  MATCH (o:Order   {orderId:   trim(row.OrderID)})
+  MATCH (p:Payment {paymentId: trim(row.PaymentID)})
+  MERGE (o)-[:SETTLED_BY]->(p)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Product -> Supplier
+CALL () {
+  LOAD CSV WITH HEADERS FROM 'file:///Product.csv' AS row
+  WITH row WHERE trim(row.ProductID) <> '' AND trim(row.SupplierID) <> ''
+  MATCH (p:Product  {productId:  trim(row.ProductID)})
+  MATCH (s:Supplier {supplierId: trim(row.SupplierID)})
+  MERGE (p)-[:SUPPLIED_BY]->(s)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Product -> Promotion
+CALL () {
+  LOAD CSV WITH HEADERS FROM 'file:///Promotion.csv' AS row
+  WITH row WHERE trim(row.ProductID) <> '' AND trim(row.PromotionID) <> ''
+  MATCH (p:Product   {productId:   trim(row.ProductID)})
+  MATCH (pm:Promotion{promotionId: trim(row.PromotionID)})
+  MERGE (p)-[:HAS_PROMOTION]->(pm)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Warehouse -> Inventory
+CALL () {
+  LOAD CSV WITH HEADERS FROM 'file:///Inventory.csv' AS row
+  WITH row WHERE trim(row.InventoryID) <> '' AND trim(row.WarehouseID) <> ''
+  MATCH (w:Warehouse {warehouseId: trim(row.WarehouseID)})
+  MATCH (i:Inventory {inventoryId: trim(row.InventoryID)})
+  MERGE (w)-[:CONTAINS]->(i)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Inventory -> Product
+CALL () {
+  LOAD CSV WITH HEADERS FROM 'file:///Inventory.csv' AS row
+  WITH row WHERE trim(row.InventoryID) <> '' AND trim(row.ProductID) <> ''
+  MATCH (i:Inventory {inventoryId: trim(row.InventoryID)})
+  MATCH (p:Product   {productId:   trim(row.ProductID)})
+  MERGE (i)-[:OF_PRODUCT]->(p)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+3. Creating Nodes
+
+// Customers
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///Customer.csv' AS row
+  WITH row WHERE trim(row.CustomerID) <> ''
+  MERGE (c:Customer {customerId: trim(row.CustomerID)})
+  SET c.name = row.Name, c.email = row.Email,
+      c.type = row.Type, c.country = row.Country
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Suppliers
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///Supplier.csv' AS row
+  WITH row WHERE trim(row.SupplierID) <> ''
+  MERGE (s:Supplier {supplierId: trim(row.SupplierID)})
+  SET s.name = row.Name, s.phone = row.Phone, s.contractType = row.ContractType
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Warehouses
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///Warehouse.csv' AS row
+  WITH row WHERE trim(row.WarehouseID) <> ''
+  MERGE (w:Warehouse {warehouseId: trim(row.WarehouseID)})
+  SET w.name = row.Name, w.location = row.Location
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Products
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///Product.csv' AS row
+  WITH row WHERE trim(row.ProductID) <> ''
+  MERGE (p:Product {productId: trim(row.ProductID)})
+  SET p.name = row.Name, p.category = row.Category, p.brand = row.Brand,
+      p.size = row.Size, p.unitPrice = toFloat(row.UnitPrice),
+      p.warrantyMonths = toInteger(row.WarrantyMonths)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Promotions
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///Promotion.csv' AS row
+  WITH row WHERE trim(row.PromotionID) <> ''
+  MERGE (pm:Promotion {promotionId: trim(row.PromotionID)})
+  SET pm.discountRate = toFloat(row.DiscountRate),
+      pm.validityPeriod = row.ValidityPeriod
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Orders  (parse DD/MM/YYYY)
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///Orders.csv' AS row
+  WITH row WHERE trim(row.OrderID) <> ''
+  WITH row, split(row.OrderDate, '/') AS d
+  MERGE (o:Order {orderId: trim(row.OrderID)})
+  SET o.status = row.Status,
+      o.orderDate = CASE
+        WHEN size(d) = 3 THEN date({
+          year: toInteger(d[2]), month: toInteger(d[1]), day: toInteger(d[0])
+        })
+        ELSE NULL END
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Order Items
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///OrderItem.csv' AS row
+  WITH row WHERE trim(row.OrderItemID) <> ''
+  MERGE (oi:OrderItem {orderItemId: trim(row.OrderItemID)})
+  SET oi.quantity = toInteger(row.Quantity),
+      oi.unitPrice = toFloat(row.UnitPrice)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Payments
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///Payment.csv' AS row
+  WITH row WHERE trim(row.PaymentID) <> ''
+  MERGE (p:Payment {paymentId: trim(row.PaymentID)})
+  SET p.method = row.Method, p.amount = toFloat(row.Amount)
+} IN TRANSACTIONS OF 1000 ROWS;
+
+// Inventory  (parse DD/MM/YYYY)
+CALL {
+  LOAD CSV WITH HEADERS FROM 'file:///Inventory.csv' AS row
+  WITH row WHERE trim(row.InventoryID) <> ''
+  WITH row, split(row.RestockDate, '/') AS d
+  MERGE (i:Inventory {inventoryId: trim(row.InventoryID)})
+  SET i.quantity = toInteger(row.Quantity),
+      i.restockDate = CASE
+        WHEN size(d) = 3 THEN date({
+          year: toInteger(d[2]), month: toInteger(d[1]), day: toInteger(d[0])
+        })
+        ELSE NULL END
+} IN TRANSACTIONS OF 1000 ROWS;
+
+
+4. Indexes for Query Optimization
+
+// PRODUCT
+CREATE INDEX product_name_idx          IF NOT EXISTS FOR (p:Product)   ON (p.Name);
+CREATE INDEX product_category_idx      IF NOT EXISTS FOR (p:Product)   ON (p.Category);
+CREATE INDEX product_brand_idx         IF NOT EXISTS FOR (p:Product)   ON (p.Brand);
+CREATE INDEX product_unitprice_idx     IF NOT EXISTS FOR (p:Product)   ON (p.UnitPrice);
+
+// ORDER
+CREATE INDEX order_date_idx            IF NOT EXISTS FOR (o:Order)     ON (o.OrderDate);
+CREATE INDEX order_status_idx          IF NOT EXISTS FOR (o:Order)     ON (o.Status);
+
+// CUSTOMER
+CREATE INDEX customer_email_idx        IF NOT EXISTS FOR (c:Customer)  ON (c.Email);
+CREATE INDEX customer_country_idx      IF NOT EXISTS FOR (c:Customer)  ON (c.Country);
+CREATE INDEX customer_city_idx         IF NOT EXISTS FOR (c:Customer)  ON (c.City);
+
+// PAYMENT
+CREATE INDEX payment_method_idx        IF NOT EXISTS FOR (pm:Payment)  ON (pm.Method);
+CREATE INDEX payment_status_idx        IF NOT EXISTS FOR (pm:Payment)  ON (pm.Status);
+CREATE INDEX payment_date_idx          IF NOT EXISTS FOR (pm:Payment)  ON (pm.PaymentDate);
+
+// SUPPLIER
+CREATE INDEX supplier_name_idx         IF NOT EXISTS FOR (s:Supplier)  ON (s.Name);
+CREATE INDEX supplier_country_idx      IF NOT EXISTS FOR (s:Supplier)  ON (s.Country);
+
+// WAREHOUSE
+CREATE INDEX warehouse_location_idx    IF NOT EXISTS FOR (w:Warehouse) ON (w.Location);
+CREATE INDEX warehouse_name_idx        IF NOT EXISTS FOR (w:Warehouse) ON (w.Name);
+
+// PROMOTION
+CREATE INDEX promotion_code_idx        IF NOT EXISTS FOR (pr:Promotion) ON (pr.Code);
+CREATE INDEX promotion_start_idx       IF NOT EXISTS FOR (pr:Promotion) ON (pr.StartDate);
+CREATE INDEX promotion_end_idx         IF NOT EXISTS FOR (pr:Promotion) ON (pr.EndDate);
+
+
+// PRODUCT
+CREATE INDEX product_name_idx          IF NOT EXISTS FOR (p:Product)   ON (p.Name);
+CREATE INDEX product_category_idx      IF NOT EXISTS FOR (p:Product)   ON (p.Category);
+CREATE INDEX product_brand_idx         IF NOT EXISTS FOR (p:Product)   ON (p.Brand);
+CREATE INDEX product_unitprice_idx     IF NOT EXISTS FOR (p:Product)   ON (p.UnitPrice);
+
+// ORDER
+CREATE INDEX order_date_idx            IF NOT EXISTS FOR (o:Order)     ON (o.OrderDate);
+CREATE INDEX order_status_idx          IF NOT EXISTS FOR (o:Order)     ON (o.Status);
+
+// CUSTOMER
+CREATE INDEX customer_email_idx        IF NOT EXISTS FOR (c:Customer)  ON (c.Email);
+CREATE INDEX customer_country_idx      IF NOT EXISTS FOR (c:Customer)  ON (c.Country);
+CREATE INDEX customer_city_idx         IF NOT EXISTS FOR (c:Customer)  ON (c.City);
+
+// PAYMENT
+CREATE INDEX payment_method_idx        IF NOT EXISTS FOR (pm:Payment)  ON (pm.Method);
+CREATE INDEX payment_status_idx        IF NOT EXISTS FOR (pm:Payment)  ON (pm.Status);
+CREATE INDEX payment_date_idx          IF NOT EXISTS FOR (pm:Payment)  ON (pm.PaymentDate);
+
+// SUPPLIER
+CREATE INDEX supplier_name_idx         IF NOT EXISTS FOR (s:Supplier)  ON (s.Name);
+CREATE INDEX supplier_country_idx      IF NOT EXISTS FOR (s:Supplier)  ON (s.Country);
+
+// WAREHOUSE
+CREATE INDEX warehouse_location_idx    IF NOT EXISTS FOR (w:Warehouse) ON (w.Location);
+CREATE INDEX warehouse_name_idx        IF NOT EXISTS FOR (w:Warehouse) ON (w.Name);
+
+// PROMOTION
+CREATE INDEX promotion_code_idx        IF NOT EXISTS FOR (pr:Promotion) ON (pr.Code);
+CREATE INDEX promotion_start_idx       IF NOT EXISTS FOR (pr:Promotion) ON (pr.StartDate);
+CREATE INDEX promotion_end_idx         IF NOT EXISTS FOR (pr:Promotion) ON (pr.EndDate);

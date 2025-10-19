@@ -1,0 +1,86 @@
+Query 1
+
+CALL () {
+  MATCH (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(oi:OrderItem)
+  RETURN c.customerId AS customerId,
+         sum(oi.quantity * oi.unitPrice) AS totalRevenue,
+         max(o.orderDate) AS lastOrderDate
+}
+RETURN customerId, totalRevenue, lastOrderDate
+ORDER BY totalRevenue DESC
+LIMIT 10;
+
+
+Query 2
+
+MATCH (s:Supplier)<-[:SUPPLIED_BY]-(p:Product)<-[:OF_PRODUCT]-(oi:OrderItem)<-[:CONTAINS]-(o:Order)
+WITH s, sum(oi.quantity * oi.unitPrice) AS totalRevenue, count(DISTINCT o.orderId) AS totalOrders
+RETURN
+  s.supplierId   AS supplierId,
+  s.name         AS supplierName,
+  totalOrders,
+  round(totalRevenue,2) AS totalRevenue,
+  CASE
+    WHEN totalRevenue > 50000 THEN 'High Value'
+    WHEN totalRevenue > 10000 THEN 'Medium Value'
+    ELSE 'Low Value'
+  END AS supplierTier
+ORDER BY totalRevenue DESC
+LIMIT 20;
+
+
+Query 3
+
+MATCH (c:Customer)-[:PLACED]->(o:Order)
+OPTIONAL MATCH (o)-[:CONTAINS]->(oi:OrderItem)-[:OF_PRODUCT]->(pr:Product)
+OPTIONAL MATCH (o)-[:SETTLED_BY]->(pm:Payment)
+WITH c,
+     collect(DISTINCT pr.category)          AS categories,
+     collect(DISTINCT pm.method)            AS payMethods,
+     count(DISTINCT o)                      AS totalOrders,
+     sum(oi.quantity * oi.unitPrice)        AS gross,
+     avg(oi.quantity * oi.unitPrice)        AS avgPerItem
+WITH c, categories, payMethods, totalOrders,
+     coalesce(gross,0)                      AS totalSpent,
+     round(coalesce(avgPerItem,0.0),2)      AS avgItemValue,
+     CASE
+       WHEN coalesce(gross,0) > 10000 THEN 'VIP'
+       WHEN coalesce(gross,0) > 2000  THEN 'Regular'
+       ELSE 'Occasional'
+     END                                    AS customerType
+RETURN
+  c.customerId AS customerId,
+  c.name       AS customerName,
+  totalOrders, round(totalSpent,2) AS totalSpent,
+  avgItemValue, categories, payMethods, customerType
+ORDER BY totalSpent DESC
+LIMIT 25;
+
+Query 4
+
+MATCH (c:Customer)-[:PLACED]->(o:Order)-[:CONTAINS]->(oi:OrderItem)-[:OF_PRODUCT]->(p:Product)
+OPTIONAL MATCH (o)-[:SETTLED_BY]->(pm:Payment)
+OPTIONAL MATCH (p)-[:HAS_PROMOTION]->(pr:Promotion)
+OPTIONAL MATCH (p)-[:SUPPLIED_BY]->(s:Supplier)
+OPTIONAL MATCH (p)<-[:OF_PRODUCT]-(inv:Inventory)<-[:CONTAINS]-(w:Warehouse)
+WITH c,o,pm,oi,p,pr,s,
+     sum(coalesce(inv.quantity,0)) AS onHand,
+     collect(DISTINCT w.name) AS warehouses
+WITH c,o,pm,oi,p,pr,s,onHand,warehouses,
+     oi.quantity AS qty,
+     oi.unitPrice AS unitPrice,
+     round(oi.unitPrice * (1 - coalesce(pr.discountRate,0.0)),2) AS effectiveUnitPrice,
+     round(oi.quantity * oi.unitPrice,2) AS lineTotal,
+     CASE WHEN onHand = 0 THEN 'Out of Stock'
+          WHEN onHand < oi.quantity THEN 'Backorder'
+          ELSE 'In Stock' END AS availability
+RETURN
+  c.customerId AS customerId, c.name AS customerName,
+  o.orderId AS orderId, o.orderDate AS orderDate,
+  p.productId AS productId, p.name AS productName, p.category AS category,
+  s.name AS supplierName, pm.method AS payMethod,
+  qty, unitPrice, effectiveUnitPrice, lineTotal,
+  onHand, warehouses, availability
+ORDER BY o.orderDate DESC, o.orderId, productName
+LIMIT 100;
+
