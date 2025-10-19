@@ -1,0 +1,20 @@
+ProductID,Name,Category,Brand,Size,SupplierID,UnitPrice,WarrantyMonths
+P001,Aero Laptop 1,Laptop,Aero,Large,S001,1200.0,12
+P002,Nova Laptop 2,Laptop,Nova,Medium,S002,900.0,12
+P003,Zen Phone 1,Phone,Zen,Small,S003,700.0,12
+P004,Aero Tablet 1,Tablet,Aero,Large,S004,600.0,12
+P005,Nova Monitor 1,Monitor,Nova,Medium,S005,400.0,12
+P006,Zen Accessory 1,Accessory,Zen,Small,S006,100.0,12
+P007,Aero Laptop 3,Laptop,Aero,Large,S007,1500.0,24
+P008,Nova Phone 2,Phone,Nova,Medium,S008,800.0,12
+P009,Zen Laptop 4,Laptop,Zen,Large,S009,1300.0,24
+P010,Aero Tablet 2,Tablet,Aero,Small,S010,500.0,12
+P100,Olive Oil 1L,Grocery,Generic,1L,S001,19.99,12
+P200,Arabica Coffee 250g,Grocery,Generic,250g,S001,14.99,12
+P300,Assam Tea 200g,Grocery,Generic,200g,S001,9.99,12
+P400,Dark Chocolate 70%,Grocery,Generic,100g,S001,5.49,12
+P500,Granola 1kg,Grocery,Generic,1kg,S001,12.49,12
+P600,Greek Yogurt 1kg,Dairy,Generic,1kg,S001,7.99,6
+P700,Almonds 500g,Grocery,Generic,500g,S001,15.49,12
+P800,Pasta 500g,Grocery,Generic,500g,S001,2.49,12
+P900,Tomato Sauce 500g,Grocery,Generic,500g,S001,3.99,12

@@ -1,0 +1,11 @@
+CustomerID,Name,Email,Type,Country
+C001,Ashish Shrestha,ashish.shrestha@gmail.com,Premium,AU
+C002,Sudip Lamichhane,sudip.lamichhane@gmail.com,Regular,SG
+C003,Suraj Raut,suraj.raut@gmail.com,Standard,NZ
+C004,Bishal Dahal,bishal.dahal@gmail.com,Premium,AU
+C005,Patrick Gurung,patrick.gurung@gmail.com,Regular,SG
+C006,Sandesh Shrestha,sandesh.shrestha@gmail.com,Standard,AU
+C007,Sujan Chapagai,sujan.chapagai@gmail.com,Premium,NZ
+C008,Sangam Osti,sangam.osti@gmail.com,Regular,SG
+C009,Ashok Rana,ashok.rana@gmail.com,Standard,AU
+C010,Anil Acharya,anil.acharya@gmail.com,Premium,NZ
