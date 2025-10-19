@@ -1,0 +1,11 @@
+customerId,customerName,totalOrders,totalSpent,avgItemValue,categories,payMethods,customerType
+C010,Anil Acharya,1,2000.0,2000.0,[Tablet],[PayPal],Occasional
+C002,Sudip Lamichhane,1,1800.0,1800.0,[Laptop],[PayPal],Occasional
+C004,Bishal Dahal,1,1800.0,1800.0,[Tablet],[CreditCard],Occasional
+C008,Sangam Osti,1,1600.0,1600.0,[Phone],[Cash],Occasional
+C007,Sujan Chapagai,1,1500.0,1500.0,[Laptop],[PayPal],Occasional
+C009,Ashok Rana,1,1300.0,1300.0,[Laptop],[CreditCard],Occasional
+C001,Ashish Shrestha,1,1200.0,1200.0,[Laptop],[CreditCard],Occasional
+C005,Patrick Gurung,1,800.0,800.0,[Monitor],[Cash],Occasional
+C003,Suraj Raut,1,700.0,700.0,[Phone],[Cash],Occasional
+C006,Sandesh Shrestha,1,500.0,500.0,[Accessory],[CreditCard],Occasional

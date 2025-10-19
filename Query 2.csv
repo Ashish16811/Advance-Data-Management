@@ -1,0 +1,11 @@
+supplierId,supplierName,totalOrders,totalRevenue,supplierTier
+S010,Supplier Ten,1,2000.0,Low Value
+S002,Supplier Two,1,1800.0,Low Value
+S004,Supplier Four,1,1800.0,Low Value
+S008,Supplier Eight,1,1600.0,Low Value
+S007,Supplier Seven,1,1500.0,Low Value
+S009,Supplier Nine,1,1300.0,Low Value
+S001,Supplier One,1,1200.0,Low Value
+S005,Supplier Five,1,800.0,Low Value
+S003,Supplier Three,1,700.0,Low Value
+S006,Supplier Six,1,500.0,Low Value
